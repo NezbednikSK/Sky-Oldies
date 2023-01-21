@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+    <title>sky 80/90</title>
+    <style>
+        .player {
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+            position: relative;
+            background-color: black;
+            margin: 0;
+        }
+
+        #ytplayerwrapper {
+            width: 100%;
+            height: calc(100% + (500px * 2));
+            margin-top: -500px;
+            margin-bottom: -500px;
+        }
+
+        .shrunk {
+            padding-left: 12.5%;
+            padding-right: 12.5%;
+        }
+
+        .clickblocker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        .logo {
+            position: absolute;
+            /* relative to 1280x720, adjusted to look right */
+            bottom: 4.5%; /*32px*/
+            right: 18%; /*212px*/
+            height: 4.5%; /*25px*/
+            transition: opacity 0.6s ease-in-out;
+        }
+        
+        .logo_h {
+            opacity: 0;
+        }
+
+        .logo_w {
+            opacity: 1;
+        }
+
+        .logo_wide {
+            right: 5.5%;
+        }
+
+        .logo_taxi {
+            right: 9.40625%;
+        }
+    </style>
+
+    <script>
+        var api = document.createElement("script");
+        api.src = "https://www.youtube.com/iframe_api";
+        document.currentScript.parentElement.insertBefore(api, document.currentScript);
+    </script>
+
+    <script>
+        function fetchFromTVServer() {
+            return new Promise((resolve, reject) => {
+                fetch("http://skyoldies-schedule.nez-cf.net.eu.org:1812/").then(data => data.json()).then(data => {
+                    resolve(data);
+                });
+            });
+        }
+
+        async function onYouTubeIframeAPIReady() {
+            console.log("iframe api loaded");
+
+            var preload = {};
+            var ytplayer = document.getElementById("ytplayer");
+            var wrap = document.getElementById("ytplayerwrapper");
+            var logoobj = document.getElementById("logo");
+
+            var initContent = await fetchFromTVServer();
+            preload = initContent;
+            document.getElementById("debugid").innerHTML = JSON.stringify(initContent);
+            if (!initContent.w) wrap.setAttribute("class", "shrunk");
+            if (initContent.wvid && !initContent.taxi) logoobj.classList.add("logo_wide");
+            if (initContent.taxi) logoobj.classList.add("logo_taxi");
+            var startAt = 0;
+            if (Object.keys(initContent).includes("start")) startAt = initContent.start;
+            var player = new YT.Player("ytplayer", {
+                width: (initContent.w ? "100%" : "75%"),
+                height: "100%",
+                videoId: initContent.id,
+                host: "https://www.youtube-nocookie.com",
+                playerVars: {
+                    autoplay: 1,
+                    playsinline: 1,
+                    start: initContent.castLen
+                },
+                events: {
+                    onReady: function(event) {
+                        console.log("ready lol", event);
+                        document.getElementById("debugnext").addEventListener("click", function(e) {
+                            console.log("clickedo");
+                            player.seekTo(player.getDuration() - 7);
+                        });
+                        setInterval(function() {
+                            var duration = (player.getDuration() | 0) - 4 - startAt;
+                            var current = (player.getCurrentTime() | 0) - startAt;
+
+                            if (current > 4 && current < duration && duration > 0 && logoobj.classList.contains("logo_h")) {
+                                logoobj.classList.remove("logo_h");
+                                logoobj.classList.add("logo_w");
+                            }
+                            if (current > duration && logoobj.classList.contains("logo_w")) {
+                                fetchFromTVServer().then(data => {
+                                    preload = data;
+                                });
+                                logoobj.classList.remove("logo_w");
+                                logoobj.classList.add("logo_h");
+                            }
+                        }, 1000);
+                    },
+                    onStateChange: function(event) {
+                        console.log(event);
+                        if (event.data == 0) {
+                            var nextSong = preload;
+
+                            // debug
+                            document.getElementById("debugid").innerHTML = JSON.stringify(nextSong);
+                            
+                            // change size & load ID
+                            if (nextSong.w) wrap.removeAttribute("class");
+                            else wrap.setAttribute("class", "shrunk");
+                            if (nextSong.wvid && !nextSong.taxi) logoobj.classList.add("logo_wide");
+                            else logoobj.classList.remove("logo_wide");
+                            if (nextSong.taxi) logoobj.classList.add("logo_taxi");
+                            else logoobj.classList.remove("logo_taxi");
+                            if (Object.keys(nextSong).includes("start")) startAt = nextSong.start;
+                            else startAt = 0;
+                            player.setSize((nextSong.w ? "100%" : "75%"), "100%");
+                            player.loadVideoById(nextSong.id, startAt);
+                        }
+                    }
+                }
+            });
+
+            document.getElementById("fullscreen").addEventListener("click", function(e) {
+                var i = document.getElementById("player");
+                i.requestFullscreen();
+                console.log(document.getElementsByClassName("logo"));
+                //player.setSize(screen.width, "100%");
+            });
+        }
+    </script>
+
+    <div class="player" id="player">
+        <div id="ytplayerwrapper">
+            <div class="reference_title" id="reference_title"></div>
+            <div id="ytplayer"></div>
+        </div>
+        <img src="logo.png" class="logo logo_h" id="logo"/>
+        <div class="clickblocker"></div>
+    </div>
+    <button id="fullscreen">fullscreen</button>
+    <pre>debug code:</pre>
+    <pre id="debugid">-/-</pre>
+    <button id="debugnext">next</button>
+</html>
