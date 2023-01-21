@@ -65,6 +65,10 @@
     </script>
 
     <script>
+        /* look, i apologize for the horrible quality of the code below
+           sometimes i blank out and the code starts looking like it came out of an obfuscator
+           but that's just how i write sometimes, sorry! - nez */
+        
         function fetchFromTVServer() {
             return new Promise((resolve, reject) => {
                 fetch("http://skyoldies-schedule.nez-cf.net.eu.org:1812/").then(data => data.json()).then(data => {
