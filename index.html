@@ -87,6 +87,8 @@
             var ytplayer = document.getElementById("ytplayer");
             var wrap = document.getElementById("ytplayerwrapper");
             var logoobj = document.getElementById("logo");
+            
+            if (_URL.searchParams.has("logo")) logoobj.setAttribute("src", _URL.searchParams.get("logo"));
 
             var initContent = await fetchFromTVServer();
             preload = initContent;
