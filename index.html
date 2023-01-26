@@ -69,9 +69,12 @@
            sometimes i blank out and the code starts looking like it came out of an obfuscator
            but that's just how i write sometimes, sorry! - nez */
         
+        var TVServer = "https://sky-oldies.nezbednik.eu.org:1812/";
+        var _URL = new URL(window.location.href);
+        if (_URL.searchParams.has("server")) TVServer = _URL.searchParams.get("server");
         function fetchFromTVServer() {
             return new Promise((resolve, reject) => {
-                fetch("https://sky-oldies.nezbednik.eu.org:1812/").then(data => data.json()).then(data => {
+                fetch(TVServer).then(data => data.json()).then(data => {
                     resolve(data);
                 });
             });
