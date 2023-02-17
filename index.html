@@ -69,7 +69,7 @@
            sometimes i blank out and the code starts looking like it came out of an obfuscator
            but that's just how i write sometimes, sorry! - nez */
         
-        var TVServer = "https://sky-oldies.nezbednik.eu.org:1812/";
+        var TVServer = "https://scheduler.services.nez-cf.net.eu.org:1812/list?station=oldies";
         var _URL = new URL(window.location.href);
         if (_URL.searchParams.has("server")) TVServer = _URL.searchParams.get("server");
         function fetchFromTVServer() {
